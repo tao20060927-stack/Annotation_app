@@ -13,7 +13,7 @@ export type QuestionTarget = { object_id: string; detail_ids: string[] };
 export type Question = {
   question_id: string;
   question_type: "detection" | "binding" | "complex";
-  task_category: string | null;
+  task_category: string | string[] | null;
   question: string;
   answer: string;
   object_ids: string[];

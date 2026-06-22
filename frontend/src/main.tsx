@@ -26,7 +26,7 @@ function App() {
   const [importPath, setImportPath] = React.useState("");
   const [questionDraft, setQuestionDraft] = React.useState({
     question_type: "detection" as Question["question_type"],
-    task_category: "",
+    task_category: [""],
     question: "",
     answer: "",
     targets: [{ object_id: "", detail_ids: [""] }] as QuestionTarget[]
@@ -404,6 +404,14 @@ function App() {
     setQuestionDraft({ ...questionDraft, targets });
   }
 
+  function updateQuestionTaskCategory(index: number, category: string) {
+    const taskCategory = questionDraft.task_category.map((item, itemIndex) => (itemIndex === index ? category : item));
+    if (taskCategory.every(Boolean)) {
+      taskCategory.push("");
+    }
+    setQuestionDraft({ ...questionDraft, task_category: taskCategory });
+  }
+
   function addQuestion() {
     if (!annotation) return;
     const selectedTargets = questionDraft.targets.filter((target) => target.object_id);
@@ -433,8 +441,9 @@ function App() {
       setMessage("Binding 问题每个 Object 都必须选择其下的 Detail。");
       return;
     }
-    if (questionDraft.question_type === "complex" && !questionDraft.task_category) {
-      setMessage("Complex Problem 必须选择四类任务分类之一。");
+    const selectedTaskCategories = questionDraft.task_category.filter(Boolean);
+    if (questionDraft.question_type === "complex" && !selectedTaskCategories.length) {
+      setMessage("Complex Problem 必须至少选择一类任务分类。");
       return;
     }
     const questionId = nextId("q", annotation.questions.map((question) => question.question_id));
@@ -444,7 +453,7 @@ function App() {
     const question: Question = {
       question_id: questionId,
       question_type: questionDraft.question_type,
-      task_category: questionDraft.question_type === "complex" ? questionDraft.task_category : null,
+      task_category: questionDraft.question_type === "complex" ? selectedTaskCategories : null,
       question: questionDraft.question,
       answer: questionDraft.answer,
       object_ids: objectIds,
@@ -612,10 +621,12 @@ function App() {
                 <option value="complex">complex</option>
               </select>
               {questionDraft.question_type === "complex" && (
-                <select value={questionDraft.task_category} onChange={(event) => setQuestionDraft({ ...questionDraft, task_category: event.target.value })}>
-                  <option value="">选择任务分类</option>
-                  {TASK_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
-                </select>
+                questionDraft.task_category.map((categoryValue, index) => (
+                  <select key={index} value={categoryValue} onChange={(event) => updateQuestionTaskCategory(index, event.target.value)}>
+                    <option value="">选择任务分类</option>
+                    {TASK_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+                  </select>
+                ))
               )}
             </div>
             <div className="question-targets">
